@@ -224,6 +224,7 @@ enum cam_req_mgr_link_evt_type {
  * @sof_timestamp_val: Captured time stamp value at sof hw event
  * @req_id   : req id which returned buf_done
  * @trigger_id: ID to differentiate between the trigger devices
+ * @trigger_source : Indicate the trigger source
  */
 struct cam_req_mgr_trigger_notify {
 	int32_t  link_hdl;
@@ -308,6 +309,8 @@ struct cam_req_mgr_notify_stop {
  * @p_delay : delay between time settings applied and take effect
  * @trigger : Trigger point for the client
  * @trigger_on : This device provides trigger
+ * @trigger_source  : Indicate the trigger source
+ * @latest_frame_id : Indicate the latest frame id
  */
 struct cam_req_mgr_device_info {
 	int32_t                     dev_hdl;

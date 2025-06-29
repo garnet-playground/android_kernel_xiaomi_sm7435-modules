@@ -15,7 +15,8 @@
 #define CAM_REQ_MGR_MAX_LINKED_DEV     16
 #define MAX_REQ_SLOTS                  48
 
-#define CAM_REQ_MGR_WATCHDOG_TIMEOUT          1000
+/* xiaomi add change wd timer reset to 5000ms from 1000ms*/
+#define CAM_REQ_MGR_WATCHDOG_TIMEOUT          5000
 #define CAM_REQ_MGR_WATCHDOG_TIMEOUT_DEFAULT  5000
 #define CAM_REQ_MGR_WATCHDOG_TIMEOUT_MAX      50000
 #define CAM_REQ_MGR_SCHED_REQ_TIMEOUT         1000
@@ -26,7 +27,11 @@
 #define FORCE_ENABLE_RECOVERY   1
 #define AUTO_RECOVERY           0
 
+#ifdef __XIAOMI_CAMERA__
+#define CRM_WORKQ_NUM_TASKS 120
+#else
 #define CRM_WORKQ_NUM_TASKS 60
+#endif
 
 #define MAX_SYNC_COUNT 65535
 
@@ -39,7 +44,7 @@
 
 #define MAXIMUM_LINKS_PER_SESSION  4
 
-#define MAXIMUM_RETRY_ATTEMPTS 3
+#define MAXIMUM_RETRY_ATTEMPTS 6
 
 #define MINIMUM_WORKQUEUE_SCHED_TIME_IN_MS 5
 
@@ -270,6 +275,7 @@ struct cam_req_mgr_req_tbl {
  * @req_id             : mask tracking which all devices have request ready
  * @sync_mode          : Sync mode in which req id in this slot has to applied
  * @additional_timeout : Adjusted watchdog timeout value associated with
+ * @internal_applied   : hybrid trigger used
  * this request
  */
 struct cam_req_mgr_slot {
@@ -347,6 +353,11 @@ struct cam_req_mgr_connected_device {
  * @workq                : Pointer to handle workq related jobs
  * @pd_mask              : each set bit indicates the device with pd equal to
  *                          bit position is available.
+ * @internal_trigger_mask: each set bit indicates the device which is triggered
+ *                          by internal trigger source
+ * @external_trigger_mask: each set bit indicates the device which is triggered
+ *                          by external trigger source
+ * @hybrid_trigger_source: Indicate whether the link is triggered by hybrid source
  * - List of connected devices
  * @l_dev                : List of connected devices to this link
  * - Request handling data struct
@@ -388,8 +399,11 @@ struct cam_req_mgr_connected_device {
  * @eof_event_cnt        : Atomic variable to track the number of EOF requests
  * @skip_init_frame      : skip initial frames crm_wd_timer validation in the
  *                         case of long exposure use case
- * @last_sof_trigger_jiffies : Record the jiffies of last sof trigger jiffies
- * @wq_congestion        : Indicates if WQ congestion is detected or not
+ * @last_sof_trigger_jiffies  : Record the jiffies of last sof trigger jiffies
+ * @wq_congestion             : Indicates if WQ congestion is detected or not
+ * @last_internal_applied_idx : Recode the last applied idx by internal trigger
+ * @last_external_applied_idx : Recode the last applied idx by external trigger
+ * @cont_empty_slots     : Continuous empty slots
  */
 struct cam_req_mgr_core_link {
 	int32_t                              link_hdl;
@@ -428,6 +442,7 @@ struct cam_req_mgr_core_link {
 	bool                                 skip_init_frame;
 	uint64_t                             last_sof_trigger_jiffies;
 	bool                                 wq_congestion;
+	uint32_t                             cont_empty_slots;
 };
 
 /**
